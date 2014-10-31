@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * @file
+ * Adds Entity Translation support for the Search API Database Search.
+ */
+
+/**
+ * Implements hook_query_TAG_alter() for search_api_db_search.
+ *
+ * Alters groupby to use item_id without language prefix for both select query
+ * and count query created in SearchApiDbService::search().
+ *
+ * @see SearchApiDbService::search()
+ * @see SearchApiDbService::createDbQuery()
+ */
+function search_api_et_db_query_search_api_db_search_alter(QueryAlterableInterface $db_query) {
+  if ($search_api_query = $db_query->getMetaData('search_api_query')) {
+    $index = $search_api_query->getIndex();
+    $controller = search_api_get_datasource_controller($index->item_type);
+    if ($controller instanceof SearchApiEtDatasourceController) {
+      if (array_search('t.item_id', $db_query->getGroupBy())) {
+        // Get rid of the existing groupby, using item_ids with language prefix
+        // still attached to them.
+        $groupby = &$db_query->getGroupBy();
+        unset($groupby['t.item_id']);
+        // Instead, use item_id with language prefix removed.
+        $db_query->groupBy("SUBSTRING_INDEX(t.item_id, '_', -1)");
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_query_TAG_alter() for search_api_db_facet.
+ *
+ * Alters seelct expression and, if required, having statement to use
+ * item_id without language prefix for facet select/count query created
+ * in SearchApiDbService::getFacets().
+ *
+ * @see SearchApiDbService::getFacets()
+ */
+function search_api_et_db_query_search_api_db_facet_alter(QueryAlterableInterface $query) {
+  $expressions = &$query->getExpressions();
+  if (!empty($expressions['num']['expression']) && $expressions['num']['expression'] == 'COUNT(DISTINCT t.item_id)') {
+    $expressions['num']['expression'] = "COUNT(DISTINCT SUBSTRING_INDEX(t.item_id, '_', -1))";
+  }
+
+  $facet = $query->getMetaData('search_api_db_facet');
+  if ($facet['min_count'] > 1) {
+    $having_conditions = &$query->havingConditions();
+    foreach (element_children($having_conditions) as $condition_key) {
+      if (
+        !empty($having_conditions[$condition_key]['field'])
+        && $having_conditions[$condition_key]['field'] == 'COUNT(DISTINCT t.item_id) >= :count'
+      ) {
+        $having_conditions[$condition_key]['field'] = "COUNT(DISTINCT SUBSTRING_INDEX(t.item_id, '_', -1)) >= :count";
+      }
+    }
+  }
+}

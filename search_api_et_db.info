@@ -1,1 +1,7 @@
 name = Search API Entity Translation Database Search
+description = "Adds Entity Translation support to the Search API Database Search."
+package = Search
+core = "7.x"
+
+dependencies[] = search_api_db (>= 7.x-1.4)
+dependencies[] = search_api_et
