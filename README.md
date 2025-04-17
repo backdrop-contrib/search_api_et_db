@@ -4,10 +4,11 @@ Search API ET DB
 WARNING: This module should be considered alpha state which is why there is
 no official release for it. Use at your own risk.
 
+An extension module to 2.x version of Search API Entity Translation.
 
-This module enables you to add a database as a server for search_api_et
-which is a module that allows you to index nodes translated by the
-entity_translation module.
+Adds Entity Translation support to the Search API Database Search (version 1.4 and above).
+
+Fixes duplicate results/incorrect facet counts returned for translated entities.
 
 Requirements
 ------------
@@ -15,8 +16,8 @@ Requirements
 This module requires that the following modules are also enabled:
 
 - [Entity Translation](https://github.com/backdrop-contrib/entity_translation)
+- [Search API Entity Translation](https://github.com/backdrop-contrib/search_api_et)
 - [Search API](https://github.com/backdrop-contrib/search_api)
-- [Search API ET](https://github.com/backdrop-contrib/search_api_et)
 
 Issues
 ------
