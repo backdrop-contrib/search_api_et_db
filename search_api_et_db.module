@@ -30,12 +30,13 @@ function search_api_et_db_query_search_api_db_search_alter(QueryAlterableInterfa
   if ($search_api_query = $db_query->getMetaData('search_api_query')) {
     $index = $search_api_query->getIndex();
     $controller = search_api_get_datasource_controller($index->item_type);
+    $item_id_pattern = search_api_et_db_get_et_item_id_pattern();
     if ($controller instanceof SearchApiEtDatasourceController) {
       $fields = &$db_query->getFields();
       $groupby = &$db_query->getGroupBy();
       $replace_pairs = array(
-        'item_id' => "SUBSTRING_INDEX(t.item_id, '_', -1)",
-        't.item_id' => "SUBSTRING_INDEX(t.item_id, '_', -1)",
+        'item_id' => "SUBSTRING_INDEX(t.item_id, '{$item_id_pattern['delimiter']}', {$item_id_pattern['count']})",
+        't.item_id' => "SUBSTRING_INDEX(t.item_id, '{$item_id_pattern['delimiter']}', {$item_id_pattern['count']})",
       );
       foreach ($replace_pairs as $from => $to) {
         if (!empty($fields[$from])) {
@@ -75,10 +76,11 @@ function search_api_et_db_query_search_api_db_facet_alter(QueryAlterableInterfac
   $fields = $query->getMetaData('search_api_db_fields');
   $field = $fields[$facet['field']];
   $tables = &$query->getTables();
+  $item_id_pattern = search_api_et_db_get_et_item_id_pattern();
   foreach ($tables as $alias => $table) {
     if ($table['table'] == $field['table']) {
       $from = $alias . '.item_id';
-      $to = "SUBSTRING_INDEX(" . $alias . ".item_id, '_', -1)";
+      $to = "SUBSTRING_INDEX(" . $alias . ".item_id, '{$item_id_pattern['separator']}', {$item_id_pattern['count']})";
       $tables[$alias]['condition'] = str_replace($from, $to, $tables[$alias]['condition']);
     }
   }
@@ -90,4 +92,35 @@ function search_api_et_db_query_search_api_db_facet_alter(QueryAlterableInterfac
   // there is a new 'having' condition added to the query, but considering that
   // it is based on the temporary table as well, it doesn't need to be updated
   // either.
+}
+
+/**
+ * Get item_id pattern based on search_api_et version.
+ * 
+ * Update 7201 of search_api_et changed the item_id pattern.
+ * It changed from {LANG}_{ENTITY-ID} to {ENTITY-ID}/{LANG}.
+ * This function checks for the update and supplies
+ * an array with the correct pattern needed for the substr_index
+ * in the queries.
+ */
+function search_api_et_db_get_et_item_id_pattern() {
+  $pattern = & drupal_static(__FUNCTION__);
+  if (!isset($pattern)) {
+    require_once DRUPAL_ROOT . '/includes/install.inc';
+    $version = drupal_get_installed_schema_version('search_api_et');
+    if ($version < 7201) {
+      $pattern = array(
+        'delimiter' => '_',
+        'count' => -1
+        );
+    }
+    else {
+      $pattern = array(
+        'delimiter' => '/',
+        'count' => 1
+        );
+    }
+  }
+
+  return $pattern;
 }
