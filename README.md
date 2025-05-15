@@ -1,14 +1,9 @@
 Search API ET DB
 ========
 
-WARNING: This module should be considered alpha state which is why there is
-no official release for it. Use at your own risk.
-
-An extension module to 2.x version of Search API Entity Translation.
-
-Adds Entity Translation support to the Search API Database Search (version 1.4 and above).
-
-Fixes duplicate results/incorrect facet counts returned for translated entities.
+UPDATE: This module should be considered DEPRECATED and not used because it
+gives incorrect search score results. The correct way to achieve the same
+thing is to limit your query by language instead.
 
 Requirements
 ------------
@@ -16,8 +11,8 @@ Requirements
 This module requires that the following modules are also enabled:
 
 - [Entity Translation](https://github.com/backdrop-contrib/entity_translation)
-- [Search API Entity Translation](https://github.com/backdrop-contrib/search_api_et)
 - [Search API](https://github.com/backdrop-contrib/search_api)
+- [Search API ET](https://github.com/backdrop-contrib/search_api_et)
 
 Issues
 ------
